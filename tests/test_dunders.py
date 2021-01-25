@@ -807,7 +807,7 @@ class TestNothing(object):
         All instances are equal.
         """
         assert _Nothing() == _Nothing() == NOTHING
-        assert not (_Nothing() != _Nothing())
+        assert _Nothing() == _Nothing()
         assert 1 != _Nothing()
 
     def test_false(self):
