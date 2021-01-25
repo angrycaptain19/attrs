@@ -314,11 +314,7 @@ class TestFunctional(object):
         """
         Pickle object serialization works on all kinds of attrs classes.
         """
-        if len(attr.fields(cls)) == 2:
-            obj = cls(123, 456)
-        else:
-            obj = cls(123)
-
+        obj = cls(123, 456) if len(attr.fields(cls)) == 2 else cls(123)
         assert repr(obj) == repr(pickle.loads(pickle.dumps(obj, protocol)))
 
     def test_subclassing_frozen_gives_frozen(self):
@@ -657,21 +653,14 @@ class TestFunctional(object):
         """
         # These cases are invalid and raise a ValueError.
         assume(cmp is None or (eq is None and order is None))
-        assume(not (eq is False and order is True))
+        assume(eq is not False or order is not True)
 
         if cmp is not None:
             rv = cmp
         elif eq is True or eq is None:
             rv = order is None or order is True
-        elif cmp is None and eq is None and order is None:
-            rv = True
-        elif cmp is None or eq is None:
-            rv = False
         else:
-            pytest.fail(
-                "Unexpected state: cmp=%r eq=%r order=%r" % (cmp, eq, order)
-            )
-
+            rv = False
         with pytest.deprecated_call() as dc:
 
             @attr.s

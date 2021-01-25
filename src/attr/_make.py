@@ -470,10 +470,7 @@ def _transform_attrs(
             a = cd.get(attr_name, NOTHING)
 
             if not isinstance(a, _CountingAttr):
-                if a is NOTHING:
-                    a = attrib()
-                else:
-                    a = attrib(default=a)
+                a = attrib() if a is NOTHING else attrib(default=a)
             ca_list.append((attr_name, a))
 
         unannotated = ca_names - annot_names
@@ -527,13 +524,13 @@ def _transform_attrs(
     # be specified as keyword args anyway). Check the order of those attrs:
     had_default = False
     for a in (a for a in attrs if a.init is not False and a.kw_only is False):
-        if had_default is True and a.default is NOTHING:
+        if had_default and a.default is NOTHING:
             raise ValueError(
                 "No mandatory attributes allowed after an attribute with a "
                 "default value or factory.  Attribute in question: %r" % (a,)
             )
 
-        if had_default is False and a.default is not NOTHING:
+        if not had_default and a.default is not NOTHING:
             had_default = True
 
     if field_transformer is not None:
@@ -627,7 +624,7 @@ class _ClassBuilder(object):
         self._cls = cls
         self._cls_dict = dict(cls.__dict__) if slots else {}
         self._attrs = attrs
-        self._base_names = set(a.name for a in base_attrs)
+        self._base_names = {a.name for a in base_attrs}
         self._base_attr_map = base_map
         self._attr_names = tuple(a.name for a in attrs)
         self._slots = slots
@@ -738,7 +735,7 @@ class _ClassBuilder(object):
 
         # Traverse the MRO to collect existing slots
         # and check for an existing __weakref__.
-        existing_slots = dict()
+        existing_slots = {}
         weakref_inherited = False
         for base_cls in self._cls.__mro__[1:-1]:
             if base_cls.__dict__.get("__weakref__", None) is not None:
@@ -1423,9 +1420,7 @@ def attrs(
                     " hashing must be either explicitly or implicitly "
                     "enabled."
                 )
-        elif hash is True or (
-            hash is None and eq is True and is_frozen is True
-        ):
+        elif hash is True or eq is True and is_frozen is True:
             # Build a __hash__ if told so, or if it's safe.
             builder.add_hash()
         else:
@@ -2026,10 +2021,7 @@ if PY2:
         """
         Unpack *attr_name* from _kw_only dict.
         """
-        if default is not None:
-            arg_default = ", %s" % default
-        else:
-            arg_default = ""
+        arg_default = ", %s" % default if default is not None else ""
         return "%s = _kw_only.pop('%s'%s)" % (
             attr_name,
             attr_name,
@@ -2799,7 +2791,7 @@ def make_class(name, attrs, bases=(object,), **attributes_arguments):
     if isinstance(attrs, dict):
         cls_dict = attrs
     elif isinstance(attrs, (list, tuple)):
-        cls_dict = dict((a, attrib()) for a in attrs)
+        cls_dict = {a: attrib() for a in attrs}
     else:
         raise TypeError("attrs argument must be a dict or a list.")
 

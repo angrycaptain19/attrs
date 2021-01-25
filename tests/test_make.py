@@ -555,8 +555,9 @@ class TestAttributes(object):
             "order": True,
             "hash": True,
             "init": True,
+            arg_name: False,
         }
-        am_args[arg_name] = False
+
         if arg_name == "eq":
             am_args["order"] = False
 
